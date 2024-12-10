@@ -43,7 +43,7 @@ const InfiniteScroll: React.FC<InfiniteScrollProps> = ({ searchQuery = '' }) => 
   const [loading, setLoading] = useState(false);
   const currentUserId = localStorage.getItem('userId');
 
-  const LIMIT = 2;
+  const LIMIT = 5;
   const REFRESH_INTERVAL = 180000; 
   const cacheKey = searchQuery === '' ? 'home' : searchQuery;
 //console.log(blogs)
