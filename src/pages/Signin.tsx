@@ -11,9 +11,28 @@ import { Eye, EyeOff, BookOpen, Pen, Globe } from 'lucide-react'
 import { jwtDecode } from 'jwt-decode'
 import { useUser } from '@/context/UserContext'
 import { useCategories } from '@/context/CategoriesContext'
+import { useSetRecoilState } from 'recoil'
+import { blogsAtom } from '@/store/blogsAtom'
+import { userAtom } from '@/store/userAtom'
+// type post = {
 
+// }
+// type user = {
+//     id : string,
+//     username : string,
+//     about : string,
+//     role : string,
+//     posts : post[],
+//     followers : user[]
+//     following : user[],
+//     profileImage : string,
+//     interested : string[]
+// }
 function Signin() {
     const navigate = useNavigate()
+    const setUsers = useSetRecoilState(userAtom)
+    const setBlogs = useSetRecoilState(blogsAtom)
+    
     const {toast} = useToast()
     const [showPassword, setShowPassword] = useState(false)
     const {setAuth} = useUser()
@@ -42,6 +61,8 @@ function Signin() {
                 localStorage.setItem("profileImage",result.data.profileImage)
                 setUserCategories(result.data.interested)
                 const decode = jwtDecode(result.data.jwt)
+                setUsers({[result.data.user.id] : result.data.user})
+                setBlogs({["Your posts"] :{posts : result.data.user.posts,hasMore : false,page : 2,lastFetchTime : Date.now()}})
                 //@ts-ignore
                 setAuth({id : decode.id ,profileImage : result.data.profileImage})
                 //@ts-ignore
@@ -52,6 +73,7 @@ function Signin() {
                     className : "bg-green-800 text-white"
                 })
             }catch(e : any){
+                console.log(e)
                 setLoading(false)
                 toast({
                     title: "Uh oh! Something went wrong.",

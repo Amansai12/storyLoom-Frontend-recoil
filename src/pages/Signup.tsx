@@ -14,6 +14,8 @@ import { jwtDecode } from 'jwt-decode'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useCategories } from '@/context/CategoriesContext'
 import { useUser } from '@/context/UserContext'
+import { useSetRecoilState } from 'recoil'
+import { userAtom } from '@/store/userAtom'
 
 
 function Signup() {
@@ -83,6 +85,8 @@ function Signup() {
         profession: z.string().min(2, {message: "Profession must be at least 2 characters"}).max(50, {message: "Profession must be 50 characters or less"}),
         interestedCategories: z.array(z.string()).min(1, {message: "Select at least one interested category"})
     })
+
+   const setUsers = useSetRecoilState(userAtom)
     const [showAllCategories, setShowAllCategories] = useState(false)
     const [inputs, setInputs] = useState<User>({
         username: "",
@@ -114,6 +118,7 @@ function Signup() {
                 localStorage.setItem("profileImage",result.data.profileImage)
                 const decode = jwtDecode(result.data.jwt)
                 setUserCategories(result.data.interested)
+                setUsers({[result.data.user.id] : result.data.user})
                 //@ts-ignore
                 setAuth({id : decode.id,profileImage : result.data.profileImage})
                 //@ts-ignore

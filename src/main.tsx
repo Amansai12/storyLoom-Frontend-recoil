@@ -6,8 +6,10 @@ import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from './components/ui/toaster.tsx'
 import { UserProvider } from './context/UserContext.tsx'
 import { CategoriesProvider } from './context/CategoriesContext.tsx'
+import { RecoilRoot } from 'recoil'
 
 createRoot(document.getElementById('root')!).render(
+  <RecoilRoot>
   <UserProvider>
     <CategoriesProvider>
   <BrowserRouter>
@@ -18,4 +20,5 @@ createRoot(document.getElementById('root')!).render(
   </BrowserRouter>
   </CategoriesProvider>
   </UserProvider>
+  </RecoilRoot>
 )

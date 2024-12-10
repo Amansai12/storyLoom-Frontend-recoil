@@ -17,8 +17,13 @@ import axios from "axios";
 import { BACKEND_URL } from "./config";
 import { useCategories } from "./context/CategoriesContext";
 
+
+
+
 function App() {
   const {setUserCategories} = useCategories()
+ 
+ 
   const {setAuth} = useUser()
   useEffect(() => {
     const userId = localStorage.getItem('userId')
@@ -27,14 +32,22 @@ function App() {
     if(userId && profileImage){
       setAuth({id : userId,profileImage : profileImage})
     }
+    
     const fetch = async () => {
-      const res = await axios.get(`${BACKEND_URL}/api/v1/user/auth`,{
-        headers :{
-          Authorization : jwt
-        }
-      })
-      setAuth({id : res.data.id,profileImage:res.data.profileImage})
-      setUserCategories(res.data.interested)
+      try{
+        const res = await axios.get(`${BACKEND_URL}/api/v1/user/auth`,{
+          headers :{
+            Authorization : jwt
+          }
+        })
+        
+        
+        setAuth({id : res.data.id,profileImage:res.data.profileImage})
+        setUserCategories(res.data.interested)
+      }catch(e){
+
+      }
+      
     }
     fetch()
     

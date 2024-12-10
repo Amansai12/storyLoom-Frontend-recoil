@@ -30,24 +30,8 @@ import EditProfileDialog from "@/components/EditProfileDialog";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-
-
-// Types
-type Post = {
-  category: string;
-  content: string;
-  createdAt: string;
-  title: string;
-  postImage: string;
-  id: string;
-  author: {
-    username: string;
-    id : string,
-    role : string,
-    profileImage : string
-  };
-  likedBy: {id : string}[];
-};
+import { useRecoilState } from "recoil";
+import { userAtom } from "@/store/userAtom";
 
 
 
@@ -59,14 +43,6 @@ type SubUser = {
   profileImage : string;
 };
 
-type User = {
-  username: string;
-  about: string;
-  role: string;
-  profileImage : string,
-  followers: SubUser[];
-  following: SubUser[];
-};
 
 
 function UserListItem({ user }: { user: SubUser }) {
@@ -143,10 +119,10 @@ function UserListItem({ user }: { user: SubUser }) {
 }
 
 function ViewProfile() {
+    
+    const [users,setUsers] = useRecoilState(userAtom)
     const [loading, setLoading] = useState(false);
     const [fLoading,setFloading] = useState(false)
-    const [posts, setPosts] = useState<Post[]>([]);
-    const [user, setUser] = useState<User>();
     const [isFollowing, setIsFollowing] = useState(false);
     const {toast} = useToast()
     const { id } = useParams();
@@ -156,16 +132,15 @@ function ViewProfile() {
         navigate('/')
     }
     const currentUserId = localStorage.getItem('userId');
-    //console.log("rendering")
-
+    const RequestInterval = 10000
     const [key, setKey] = useState(id);
-   useEffect(()=>{
-    
-   },[user])
-    
+   
+
   useEffect(() => {
-   setPosts([])
+    
     if (id) {
+      const currentTime = Date.now();
+    const stale = currentTime - users[id]?.lastFetchTime
       setKey(id)
       const jwt = localStorage.getItem('jwt');
       const fetchPosts = async () => {
@@ -176,8 +151,10 @@ function ViewProfile() {
               Authorization: jwt
             }
           });
-          setPosts([...res.data.posts]);
-          setUser(res.data.user);
+          let u = res.data.user
+          u["posts"] = res.data.posts
+          u["lastFetchTime"] = Date.now()
+          setUsers((prev) => ({...prev,[id] : u}))
           
           const x = res.data.user.followers.find((u : SubUser)=> u.id == currentUserId)
           if(x){
@@ -195,12 +172,21 @@ function ViewProfile() {
           setLoading(false);
         }
       };
-      fetchPosts();
+      if(!users[id] || stale > RequestInterval){
+        fetchPosts();
+      }
+      else{
+        const x = users[id].followers.find((u : SubUser)=> u.id == currentUserId)
+          if(x){
+              setIsFollowing(true)
+          }
+      }
     }
   }, [id,jwt,currentUserId,toast]);
 
-  
-
+  const user = users[id?id:""]
+ 
+ 
   const handleFollowToggle = async () => {
     try {
       setFloading(true);
@@ -211,16 +197,21 @@ function ViewProfile() {
             Authorization: jwt
           }
         });
+        if(currentUserId){
+          const updatedFollowers = users[currentUserId].following.filter(
+            (follower) => follower.id !== id
+          );
+          setUsers((prev) => ({...prev,[currentUserId] : {...(prev[currentUserId]),following : updatedFollowers}}))
+        }
+        
         
         // Update local state
         if (user) {
           const updatedFollowers = user.followers.filter(
             (follower) => follower.id !== currentUserId
           );
-          setUser({
-            ...user,
-            followers: updatedFollowers
-          });
+          if(id)
+          setUsers((prev) => ({...prev,[id] : {...(prev[id]),followers : updatedFollowers}}))
         }
         setIsFollowing(false);
       } else {
@@ -230,7 +221,16 @@ function ViewProfile() {
             Authorization: jwt
           }
         });
-        
+        if(currentUserId && id){
+          const newFollower = {
+            id: id,
+            username: users[id].username,
+            about: users[id].about,
+            role: users[id].role,
+            profileImage : users[id].profileImage
+          };
+          setUsers((prev) => ({...prev,[currentUserId] : {...(prev[currentUserId]),following : [...prev[currentUserId].following,newFollower]}}))
+        }
         // Update local state
         if (user) {
           const newFollower = {
@@ -240,10 +240,8 @@ function ViewProfile() {
             role: res.data.user.role,
             profileImage : res.data.user.profileImage
           };
-          setUser({
-            ...user,
-            followers: [...user.followers, newFollower]
-          });
+          if(id)
+          setUsers((prev) => ({...prev,[id] : {...(prev[id]),followers : [...prev[id].followers,newFollower]}}))
         }
         setIsFollowing(true);
       }
@@ -296,10 +294,13 @@ function ViewProfile() {
           
           if (user) {
             console.log(updatedUser)
-            setUser({
-              ...user,
-              ...updatedUser
-            });
+            // setUser({
+            //   ...user,
+            //   ...updatedUser
+            // });
+            setUsers((prev) => ({...prev,[id] : {...(prev[id]),...updatedUser}}))
+            setUsers((prev) => ({...prev,[id] : {...(prev[id]),posts : prev[id].posts.map((e)=> ({...e,author : {id : id,username : prev[id].username,profileImage : prev[id].profileImage,role : prev[id].role}}))}}))
+            
           }
         }}
       />
@@ -419,7 +420,7 @@ function ViewProfile() {
                   className="space-y-4"
                 >
                   
-                  {posts.length > 0 ? posts.map((post) => (
+                  {user?.posts && user?.posts?.length > 0 ? user?.posts?.map((post) => (
                     <motion.div
                       key={post.id}
                       initial={{ opacity: 0, y: 20 }}

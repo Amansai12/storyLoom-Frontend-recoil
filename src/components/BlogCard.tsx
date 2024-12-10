@@ -48,7 +48,6 @@ export const EditPostDialog: React.FC<EditPostDialogProps> = ({ post, onSave }) 
   const [title, setTitle] = useState(post.title);
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
   const handleSave = async () => {
     setIsSaving(true);
     try {

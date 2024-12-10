@@ -10,6 +10,8 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useCategories } from '@/context/CategoriesContext';
 import { Search} from 'lucide-react';
 
+
+
 const Blogs: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('home');
@@ -18,6 +20,8 @@ const Blogs: React.FC = () => {
   const { toast } = useToast();
   const jwt = localStorage.getItem('jwt');
   const { userCategories } = useCategories();
+
+  
 
   useEffect(() => {
     const cat = [{ id: 'home', name: 'Home' }];

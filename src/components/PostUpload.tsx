@@ -22,6 +22,9 @@ import UploadLoader from "./UploadLoader";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import AISummaryDrawer2 from "./AiForUpload";
+import { useSetRecoilState } from "recoil";
+import { blogsAtom } from "@/store/blogsAtom";
+
 
 // Define tag type
 type Tag = {
@@ -106,6 +109,7 @@ const [showAllTags, setShowAllTags] = useState(false);
 const toggleTagVisibility = () => {
   setShowAllTags(!showAllTags);
 };
+const setBlogs = useSetRecoilState(blogsAtom)
 
 const displayedTags = showAllTags ? availableTags : availableTags.slice(0, 12);
 
@@ -153,7 +157,7 @@ const displayedTags = showAllTags ? availableTags : availableTags.slice(0, 12);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     try {
       setStage("processing");
-      await axios.post(
+      const res = await axios.post(
         `${BACKEND_URL}/api/v1/blog`,
         formData,
         {
@@ -163,6 +167,17 @@ const displayedTags = showAllTags ? availableTags : availableTags.slice(0, 12);
           },
         }
       );
+      console.log(res.data)
+      const newPost = res.data.data
+      setBlogs(prevBlogs => ({
+        ...prevBlogs,
+        ["Your posts"]: {
+          posts: [...(prevBlogs["Your posts"]?.posts || []), newPost],
+          page: prevBlogs["Your posts"].page,
+          hasMore: true,
+          lastFetchTime: Date.now()
+        }
+      }));
       toast({
         title: "Blog Uploaded successfully",
         className: "bg-gray-800 text-white",

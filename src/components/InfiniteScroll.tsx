@@ -1,90 +1,132 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback} from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Button } from './ui/button';
 import BlogCards from './BlogCard';
 import { BACKEND_URL } from '@/config';
 import BlogPostSkeleton from './BlogPostSkeleton';
+import { useRecoilState } from 'recoil';
+import { blogsAtom } from '@/store/blogsAtom';
+
 interface Post {
-    id: string;
-    title: string;
-    content: string;
-    category: string;
-    published: boolean;
-    author: {
-      username: string,
-      id : string,
-      role : string,
-      profileImage : string
-    },
-    createdAt : string;
-    likedBy : user[],
-    postImage : string
-  }
-  type user = {
-    id : string,
-  }
-  
-  interface InfiniteScrollProps {
-    searchQuery?: string;
-  }
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  published: boolean;
+  author: {
+    username: string,
+    id: string,
+    role: string,
+    profileImage: string
+  },
+  createdAt: string;
+  likedBy: user[],
+  postImage: string
+}
+
+type user = {
+  id: string,
+}
+
+interface InfiniteScrollProps {
+  searchQuery?: string;
+}
 
 const InfiniteScroll: React.FC<InfiniteScrollProps> = ({ searchQuery = '' }) => {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [blogs, setBlogs] = useRecoilState<Record<string, { 
+    posts: Post[], 
+    page: number, 
+    hasMore: boolean, 
+    lastFetchTime: number 
+  }>>(blogsAtom);
   const [loading, setLoading] = useState(false);
-  const currentUserId = localStorage.getItem('userId')
+  const currentUserId = localStorage.getItem('userId');
 
-  const LIMIT = 5;
-
-  const fetchPosts = useCallback(async () => {
-    if (!hasMore) return;
+  const LIMIT = 2;
+  const REFRESH_INTERVAL = 580000; 
+  const cacheKey = searchQuery === '' ? 'home' : searchQuery;
+//console.log(blogs)
+  const fetchPosts = useCallback(async (pageToFetch: number) => {
     
+    if (blogs[cacheKey]?.hasMore === false) return;
+
+  
+    const currentTime = Date.now();
+    
+    if(pageToFetch == 1 && blogs[cacheKey]){
+      
+      setBlogs(prevBlogs => {
+        const updatedBlogs = { ...prevBlogs };
+        delete updatedBlogs[cacheKey];
+        return updatedBlogs;
+      });
+    }
     setLoading(true);
     try {
+      console.log(pageToFetch)
       const response = await axios.get(`${BACKEND_URL}/api/v1/bulk/${currentUserId}`, {
         params: {
           search: searchQuery,
           limit: LIMIT,
-          page: page
+          page: pageToFetch
         }
       });
-      
       const newPosts = response.data.posts || [];
-      
-      setPosts(prevPosts => 
-        page === 1 
-          ? newPosts 
-          : [...prevPosts, ...newPosts]
-      );
-      
-      setHasMore(newPosts.length === LIMIT);
+
+      setBlogs(prevBlogs => ({
+        ...prevBlogs,
+        [cacheKey]: {
+          posts: pageToFetch === 1 
+            ? newPosts 
+            : [...(prevBlogs[cacheKey]?.posts || []), ...newPosts],
+          page: pageToFetch,
+          hasMore: newPosts.length === LIMIT,
+          lastFetchTime: currentTime
+        }
+      }));
+
     } catch (error) {
       console.error('Error fetching posts:', error);
-      setHasMore(false);
+      
+      // Update hasMore to false in case of error
+      setBlogs(prevBlogs => ({
+        ...prevBlogs,
+        [cacheKey]: {
+          ...(prevBlogs[cacheKey] || {}),
+          hasMore: false
+        }
+      }));
     } finally {
       setLoading(false);
     }
-  }, [page, searchQuery, hasMore]);
+  }, [searchQuery, currentUserId, blogs, cacheKey, REFRESH_INTERVAL]);
 
   useEffect(() => {
-    fetchPosts();
-  }, [page, fetchPosts]);
+    // Fetch initial posts if not cached or data is stale
+    const currentTime = Date.now();
+    const lastFetchTime = blogs[cacheKey]?.lastFetchTime || 0;
+    const isStale = currentTime - lastFetchTime > REFRESH_INTERVAL;
+    
 
-  useEffect(() => {
-    setPosts([]);
-    setPage(1);
-    setHasMore(true);
-  }, [searchQuery]);
+    if (!blogs[cacheKey] || isStale) {
+      fetchPosts(1);
+    }
+  }, [searchQuery, fetchPosts, blogs, cacheKey]);
 
   const handleLoad = () => {
-    setPage(prevPage => prevPage + 1);
-  }
+    // Fetch the next page
+    const nextPage = (blogs[cacheKey]?.page || 1) + 1;
+    fetchPosts(nextPage);
+  };
+
+  // Get posts for current search query
+  const currentPosts = blogs[cacheKey]?.posts || [];
+  const hasMore = blogs[cacheKey]?.hasMore ?? true;
 
   return (
     <div className="space-y-6">
-      {posts.length === 0 && !loading ? (
+      {currentPosts.length === 0 && !loading ? (
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -101,7 +143,7 @@ const InfiniteScroll: React.FC<InfiniteScrollProps> = ({ searchQuery = '' }) => 
           transition={{ staggerChildren: 0.1 }}
           className="space-y-6"
         >
-          {posts.map((post) => (
+          {currentPosts.map((post) => (
             <motion.div
               key={post.id}
               initial={{ opacity: 0, y: 20 }}
@@ -115,7 +157,7 @@ const InfiniteScroll: React.FC<InfiniteScrollProps> = ({ searchQuery = '' }) => 
                 author={post.author}
                 createdAt={post.createdAt}
                 likeBy={post.likedBy}
-                postImage = {post.postImage}
+                postImage={post.postImage}
               />
             </motion.div>
           ))}
@@ -124,9 +166,11 @@ const InfiniteScroll: React.FC<InfiniteScrollProps> = ({ searchQuery = '' }) => 
 
       <div className="flex justify-center mt-8">
         {loading ? (
-          <div className='w-full'><BlogPostSkeleton />
-          <BlogPostSkeleton />
-          <BlogPostSkeleton /></div>
+          <div className='w-full'>
+            <BlogPostSkeleton />
+            <BlogPostSkeleton />
+            <BlogPostSkeleton />
+          </div>
         ) : hasMore ? (
           <Button 
             onClick={handleLoad}
@@ -134,7 +178,7 @@ const InfiniteScroll: React.FC<InfiniteScrollProps> = ({ searchQuery = '' }) => 
           >
             Load More Posts
           </Button>
-        ) : posts.length > 0 ? (
+        ) : currentPosts.length > 0 ? (
           <p className="text-gray-500 text-center">
             You've reached the end of our current posts.
           </p>
