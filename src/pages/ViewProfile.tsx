@@ -132,7 +132,7 @@ function ViewProfile() {
         navigate('/')
     }
     const currentUserId = localStorage.getItem('userId');
-    const RequestInterval = 10000
+    const RequestInterval = 180000
     const [key, setKey] = useState(id);
    
 
