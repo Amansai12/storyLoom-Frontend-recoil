@@ -3,7 +3,6 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Button } from './ui/button';
 import BlogCards from './BlogCard';
-import Loader from './Loader';
 import { BACKEND_URL } from '@/config';
 import BlogPostSkeleton from './BlogPostSkeleton';
 interface Post {
@@ -15,7 +14,8 @@ interface Post {
     author: {
       username: string,
       id : string,
-      role : string
+      role : string,
+      profileImage : string
     },
     createdAt : string;
     likedBy : user[],

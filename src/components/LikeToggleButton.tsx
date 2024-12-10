@@ -44,14 +44,14 @@ export const LikeToggleButton: React.FC<LikeToggleButtonProps> = ({
               onToggle(liked)
             }
             setCount((prev) => prev - 1)
-            const response = await axios.get(`${BACKEND_URL}/api/v1/blog/dislike/${postId}`, {
+            await axios.get(`${BACKEND_URL}/api/v1/blog/dislike/${postId}`, {
                 headers: { Authorization: jwt }
               });
               
         }else{
             setLiked(true)
             setCount((prev) => prev + 1)
-            const response = await axios.get(`${BACKEND_URL}/api/v1/blog/like/${postId}`, {
+            await axios.get(`${BACKEND_URL}/api/v1/blog/like/${postId}`, {
                 headers: { Authorization: jwt }
               });
         }

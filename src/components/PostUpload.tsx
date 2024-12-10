@@ -153,7 +153,7 @@ const displayedTags = showAllTags ? availableTags : availableTags.slice(0, 12);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     try {
       setStage("processing");
-      const response = await axios.post(
+      await axios.post(
         `${BACKEND_URL}/api/v1/blog`,
         formData,
         {

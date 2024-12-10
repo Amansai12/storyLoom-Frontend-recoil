@@ -206,7 +206,7 @@ function ViewProfile() {
       setFloading(true);
       if (isFollowing) {
         // Unfollow
-        const res = await axios.get(`${BACKEND_URL}/api/v1/user/auth/unfollow/${id}`, {
+        await axios.get(`${BACKEND_URL}/api/v1/user/auth/unfollow/${id}`, {
           headers: {
             Authorization: jwt
           }

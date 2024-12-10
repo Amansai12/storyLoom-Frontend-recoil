@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import BlogCards from '@/components/BlogCard'
 import Loader from '@/components/Loader'

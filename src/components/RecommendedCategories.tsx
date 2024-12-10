@@ -12,7 +12,6 @@ import {
   Activity,
   ChevronDown,
   ChevronUp,
-  Home,
   Info,
   Users
 } from 'lucide-react';

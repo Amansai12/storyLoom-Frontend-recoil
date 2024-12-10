@@ -1,6 +1,6 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Clock, ArrowRight, Edit2, Edit, Loader2, FilePenLine } from "lucide-react";
+import { Clock, ArrowRight, Loader2, FilePenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { LikeToggleButton } from "./LikeToggleButton";
@@ -184,7 +184,7 @@ const BlogCards = ({
 
   const handlePostUpdate = async (updatedContent: string, updatedTitle: string) => {
     try {
-      const res = await axios.put(`${BACKEND_URL}/api/v1/blog`, {
+      await axios.put(`${BACKEND_URL}/api/v1/blog`, {
         content: updatedContent,
         id: id,
         title: updatedTitle
@@ -193,6 +193,7 @@ const BlogCards = ({
           Authorization: jwt
         }
       })
+
       setMatter(updatedContent)
       setHeading(updatedTitle)
       toast({
