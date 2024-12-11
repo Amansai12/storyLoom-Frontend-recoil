@@ -223,7 +223,7 @@ const BlogCards = ({
   };
 
   return (
-    <div className="max-h-[450px] group relative bg-white shadow-lg rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl border border-gray-100 flex flex-col md:flex-row-reverse">
+    <div className="max-h-[700px] md:max-h-[450px] group relative bg-white shadow-lg rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl border border-gray-100 flex flex-col md:flex-row-reverse">
       {/* Image Section - Now on the right */}
       <div className="md:w-4/12 lg:w-5/12 relative overflow-hidden">
         <img 
